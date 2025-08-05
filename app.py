@@ -23,10 +23,24 @@ merged_weights_comparison = pd.read_json(
     "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/merged_weights_comparison.json"
 )
 
-# Load sector weight data (replace with your actual source)
+# Load JSON
 sector_weight_df = pd.read_json(
     "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/sector_weight_df.json"
 )
+
+# If the JSON stores dates as epoch milliseconds
+if pd.api.types.is_numeric_dtype(sector_weight_df['Next_Portfolio_Date']):
+    sector_weight_df['Next_Portfolio_Date'] = pd.to_datetime(
+        sector_weight_df['Next_Portfolio_Date'], unit='ms', errors='coerce'
+    )
+else:
+    # If stored as string format
+    sector_weight_df['Next_Portfolio_Date'] = pd.to_datetime(
+        sector_weight_df['Next_Portfolio_Date'], errors='coerce'
+    )
+
+# Drop NaT values
+sector_weight_df = sector_weight_df.dropna(subset=['Next_Portfolio_Date'])
 
 
 # ---------------------------
@@ -107,7 +121,16 @@ fig.update_layout(
 # ---------------------------
 # Chart 2: Sector Active Weights (new code you sent)
 # ---------------------------
-import plotly.graph_objects as go
+# import plotly.graph_objects as go
+
+# # Step 1: Sort dates (Fix: ensure proper datetime format)
+# sector_weight_df['Next_Portfolio_Date'] = pd.to_datetime(
+#     sector_weight_df['Next_Portfolio_Date'], errors='coerce'
+# )
+
+# # Drop NaT values
+# sector_weight_df = sector_weight_df.dropna(subset=['Next_Portfolio_Date'])
+
 
 # Step 1: Sort dates
 all_dates = sorted(sector_weight_df['Next_Portfolio_Date'].dropna().unique())
@@ -167,6 +190,72 @@ fig_sector.update_layout(
     )]
 )
 
+# =============================
+# Chart 3: Top Active Weight Changes
+# =============================
+
+# Ensure date column is datetime
+sector_weight_df['Next_Portfolio_Date'] = pd.to_datetime(sector_weight_df['Next_Portfolio_Date'], errors='coerce')
+
+# Step 2: Get sorted unique dates (excluding the first one)
+all_dates_changes = sorted(sector_weight_df['Next_Portfolio_Date'].dropna().unique())[1:]
+
+# Step 3: Prepare Plotly figure with dropdown traces
+fig_changes = go.Figure()
+
+for i, date in enumerate(all_dates_changes):
+    weights_on_date = (
+        sector_weight_df[sector_weight_df['Next_Portfolio_Date'] == date]
+        .dropna(subset=['Active_Weight_Change'])
+        .sort_values('Active_Weight_Change', ascending=False)
+        .head(10)
+    )
+    
+    bar = go.Bar(
+        x=weights_on_date['AMFI_Sector'],
+        y=weights_on_date['Active_Weight_Change'],
+        marker_color=['#1f77b4' if val >= 0 else '#d62728' for val in weights_on_date['Active_Weight_Change']],
+        text=weights_on_date['Active_Weight_Change'].round(2),
+        textposition='auto',
+        name=date.strftime('%Y-%m-%d'),
+        visible=True if i == len(all_dates_changes) - 1 else False,
+        hovertemplate='<b>%{x}</b><br>Change in Active Weight: %{y:.2f}%<extra></extra>'
+    )
+    
+    fig_changes.add_trace(bar)
+
+# Step 4: Create dropdown
+dropdown_buttons_changes = []
+for i, date in enumerate(all_dates_changes):
+    visibility = [j == i for j in range(len(all_dates_changes))]
+    dropdown_buttons_changes.append(dict(
+        label=date.strftime('%Y-%m-%d'),
+        method='update',
+        args=[{'visible': visibility},
+              {'title': f'Top Active Weight Changes — {date.strftime("%Y-%m-%d")}'}]
+    ))
+
+# Step 5: Layout
+fig_changes.update_layout(
+    title=f'Top Active Weight Changes — {all_dates_changes[-1].strftime("%Y-%m-%d")}',
+    xaxis_title='Sector',
+    yaxis_title='Change in Active Weight (%)',
+    template='plotly_white',
+    height=600,
+    margin=dict(t=80, b=60),
+    updatemenus=[dict(
+        active=len(all_dates_changes) - 1,
+        buttons=dropdown_buttons_changes,
+        direction='down',
+        x=0.01,
+        y=1.15,
+        xanchor='left',
+        yanchor='top',
+        showactive=True
+    )]
+)
+
+
 
 # ---------------------------
 # Create scrollable table
@@ -202,9 +291,11 @@ table_component = dash_table.DataTable(
 # ---------------------------
 app.layout = html.Div([
     html.H1("Peer Analysis Dashboard"),
-    dcc.Graph(figure=fig),  # Existing quartile chart
+    dcc.Graph(figure=fig),  # Chart 1
     html.H2("Active Weights by Sector"),
-    dcc.Graph(figure=fig_sector),  # New sector chart
+    dcc.Graph(figure=fig_sector),  # Chart 2
+    html.H2("Top Active Weight Changes"),
+    dcc.Graph(figure=fig_changes),  # Chart 3
     html.H2("Merged Weights Comparison"),
     table_component
 ])
@@ -215,5 +306,9 @@ app.layout = html.Div([
 # ---------------------------
 server = app.server  # Required for deployment
 
+import webbrowser
+
 if __name__ == "__main__":
+    webbrowser.open("http://127.0.0.1:8051")  # Opens browser automatically
     app.run(debug=True, port=8051)
+
