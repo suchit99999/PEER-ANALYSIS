@@ -168,7 +168,6 @@ fig_sector.update_layout(
 )
 
 
-
 # ---------------------------
 # Create scrollable table
 # ---------------------------
