@@ -101,6 +101,10 @@ fig.update_layout(
 # ---------------------------
 # Create scrollable table
 # ---------------------------
+# Round numeric columns to 2 decimal places
+merged_weights_comparison = merged_weights_comparison.round(2)
+
+# Create scrollable table
 table_component = dash_table.DataTable(
     data=merged_weights_comparison.to_dict('records'),
     columns=[{"name": i, "id": i} for i in merged_weights_comparison.columns],
@@ -121,6 +125,7 @@ table_component = dash_table.DataTable(
     },
     fixed_rows={'headers': True}
 )
+
 
 # ---------------------------
 # Layout
