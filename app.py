@@ -64,7 +64,7 @@ plot_data_peer = plot_data_peer.dropna(subset=['Portfolio  Date'])
 
 # Load JSON
 plot_data = pd.read_json(
-    "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/plot_data_peer.json"
+    "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/plot_data.json"
 )
 
 # If the JSON stores dates as epoch milliseconds
