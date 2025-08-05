@@ -81,6 +81,26 @@ else:
 # Drop NaT values
 plot_data = plot_data.dropna(subset=['Portfolio  Date'])
 
+# Load JSON
+pivot_avg = pd.read_json(
+    "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/pivot_avg.json"
+)
+
+# If the JSON stores dates as epoch milliseconds
+if pd.api.types.is_numeric_dtype(pivot_avg['Portfolio  Date']):
+    pivot_avg['Portfolio  Date'] = pd.to_datetime(
+        pivot_avg['Portfolio  Date'], unit='ms', errors='coerce'
+    )
+else:
+    # If stored as string format
+    pivot_avg['Portfolio  Date'] = pd.to_datetime(
+        pivot_avg['Portfolio  Date'], errors='coerce'
+    )
+
+# Drop NaT values
+pivot_avg = pivot_avg.dropna(subset=['Portfolio  Date'])
+
+
 # ---------------------------
 # Create Dash app
 # ---------------------------
@@ -395,6 +415,36 @@ fig_tracking_error_all.update_layout(
     legend_title='Click schemes to toggle'
 )
 
+import plotly.io as pio
+
+# =============================
+# Chart 6: Average Investment Category Allocation
+# =============================
+
+fig_avg_allocation = go.Figure()
+
+for category in pivot_avg.columns:
+    fig_avg_allocation.add_trace(
+        go.Scatter(
+            x=pivot_avg.index,
+            y=pivot_avg[category],
+            mode='lines',
+            name=category,
+            fill='tozeroy'
+        )
+    )
+
+fig_avg_allocation.update_layout(
+    title="Average Investment Category Allocation Across All Schemes",
+    xaxis_title="Date",
+    yaxis_title="Average Weight (%)",
+    legend_title="Investment Category",
+    height=600,
+    template='plotly_white'
+)
+
+
+
 # ---------------------------
 # Create scrollable table
 # ---------------------------
@@ -429,16 +479,27 @@ table_component = dash_table.DataTable(
 # ---------------------------
 app.layout = html.Div([
     html.H1("Peer Analysis Dashboard"),
-    dcc.Graph(figure=fig),  # Chart 1
+
+    # Chart 6 becomes first chart
+    html.H2("Average Investment Category Allocation Across All Schemes"),
+    dcc.Graph(figure=fig_avg_allocation),
+
+    html.H2("Rolling Quartile Performance"),
+    dcc.Graph(figure=fig),  # Chart 1 (now second)
+
     html.H2("Active Weights by Sector"),
     dcc.Graph(figure=fig_sector),  # Chart 2
+
     html.H2("Top Active Weight Changes"),
     dcc.Graph(figure=fig_changes),  # Chart 3
+
     html.H2("Tracking Error With Peer Benchmark Over Time"),
     dcc.Graph(figure=fig_tracking_error),  # Chart 4
-    html.H2("Tracking Error With Nifty 500 Over Time"),
+
+    html.H2("Tracking Error Over Time (All Schemes)"),
     dcc.Graph(figure=fig_tracking_error_all),  # Chart 5
-    html.H2("Active Weights"),
+
+    html.H2("Merged Weights Comparison"),
     table_component
 ])
 
