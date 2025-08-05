@@ -421,16 +421,21 @@ import plotly.io as pio
 # Chart 6: Average Investment Category Allocation
 # =============================
 
+# Ensure Portfolio Date is datetime
+pivot_avg["Portfolio  Date"] = pd.to_datetime(pivot_avg["Portfolio  Date"], errors="coerce")
+
+# Create figure
 fig_avg_allocation = go.Figure()
 
-for category in pivot_avg.columns:
+# Loop over only the category columns (exclude the date column)
+for category in pivot_avg.columns.drop("Portfolio  Date"):
     fig_avg_allocation.add_trace(
         go.Scatter(
-            x=pivot_avg.index,
+            x=pivot_avg["Portfolio  Date"],  # use actual dates
             y=pivot_avg[category],
-            mode='lines',
+            mode="lines",
             name=category,
-            fill='tozeroy'
+            fill="tozeroy"
         )
     )
 
@@ -440,7 +445,7 @@ fig_avg_allocation.update_layout(
     yaxis_title="Average Weight (%)",
     legend_title="Investment Category",
     height=600,
-    template='plotly_white'
+    template="plotly_white"
 )
 
 
@@ -484,14 +489,15 @@ app.layout = html.Div([
     html.H2("Average Investment Category Allocation Across All Schemes"),
     dcc.Graph(figure=fig_avg_allocation),
 
-    html.H2("Rolling Quartile Performance"),
-    dcc.Graph(figure=fig),  # Chart 1 (now second)
 
     html.H2("Active Weights by Sector"),
     dcc.Graph(figure=fig_sector),  # Chart 2
 
     html.H2("Top Active Weight Changes"),
     dcc.Graph(figure=fig_changes),  # Chart 3
+    
+    html.H2("Merged Weights Comparison"),
+    table_component,
 
     html.H2("Tracking Error With Peer Benchmark Over Time"),
     dcc.Graph(figure=fig_tracking_error),  # Chart 4
@@ -499,8 +505,9 @@ app.layout = html.Div([
     html.H2("Tracking Error Over Time (All Schemes)"),
     dcc.Graph(figure=fig_tracking_error_all),  # Chart 5
 
-    html.H2("Merged Weights Comparison"),
-    table_component
+    
+    html.H2("Rolling Quartile Performance"),
+    dcc.Graph(figure=fig),  # Chart 1 (now second)
 ])
 
 
