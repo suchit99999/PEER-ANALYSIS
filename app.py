@@ -386,7 +386,7 @@ for scheme in unique_schemes:
 
 # Step 4: Layout
 fig_tracking_error_all.update_layout(
-    title='Tracking Error Over Time',
+    title='Tracking Error With Nifty 500',
     xaxis_title='Date',
     yaxis_title='Tracking Error (%)',
     template='plotly_white',
@@ -436,9 +436,9 @@ app.layout = html.Div([
     dcc.Graph(figure=fig_changes),  # Chart 3
     html.H2("Tracking Error With Peer Benchmark Over Time"),
     dcc.Graph(figure=fig_tracking_error),  # Chart 4
-    html.H2("Tracking Error Over Time (All Schemes)"),
+    html.H2("Tracking Error With Nifty 500 Over Time"),
     dcc.Graph(figure=fig_tracking_error_all),  # Chart 5
-    html.H2("Merged Weights Comparison"),
+    html.H2("Active Weights"),
     table_component
 ])
 
