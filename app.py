@@ -43,6 +43,44 @@ else:
 sector_weight_df = sector_weight_df.dropna(subset=['Next_Portfolio_Date'])
 
 
+# Load JSON
+plot_data_peer = pd.read_json(
+    "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/plot_data_peer.json"
+)
+
+# If the JSON stores dates as epoch milliseconds
+if pd.api.types.is_numeric_dtype(plot_data_peer['Portfolio  Date']):
+    plot_data_peer['Portfolio  Date'] = pd.to_datetime(
+        plot_data_peer['Portfolio  Date'], unit='ms', errors='coerce'
+    )
+else:
+    # If stored as string format
+    plot_data_peer['Portfolio  Date'] = pd.to_datetime(
+        plot_data_peer['Portfolio  Date'], errors='coerce'
+    )
+
+# Drop NaT values
+plot_data_peer = plot_data_peer.dropna(subset=['Portfolio  Date'])
+
+# Load JSON
+plot_data = pd.read_json(
+    "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/plot_data_peer.json"
+)
+
+# If the JSON stores dates as epoch milliseconds
+if pd.api.types.is_numeric_dtype(plot_data['Portfolio  Date']):
+    plot_data['Portfolio  Date'] = pd.to_datetime(
+        plot_data['Portfolio  Date'], unit='ms', errors='coerce'
+    )
+else:
+    # If stored as string format
+    plot_data['Portfolio  Date'] = pd.to_datetime(
+        plot_data['Portfolio  Date'], errors='coerce'
+    )
+
+# Drop NaT values
+plot_data = plot_data.dropna(subset=['Portfolio  Date'])
+
 # ---------------------------
 # Create Dash app
 # ---------------------------
@@ -255,7 +293,107 @@ fig_changes.update_layout(
     )]
 )
 
+import plotly.express as px
 
+# =============================
+# Chart 4: Tracking Error vs Peer Benchmark
+# =============================
+
+highlight_scheme = 'Shriram Flexi Cap Fund (G)'
+
+# Ensure dates are parsed
+plot_data_peer['Portfolio  Date'] = pd.to_datetime(plot_data_peer['Portfolio  Date'], errors='coerce')
+
+unique_schemes = sorted(plot_data_peer['Scheme Name'].unique())
+
+# Step 2: Color map
+color_palette = px.colors.qualitative.Dark24 + px.colors.qualitative.Set3 + px.colors.qualitative.Set2
+color_map = {scheme: color_palette[i % len(color_palette)] for i, scheme in enumerate(unique_schemes)}
+color_map[highlight_scheme] = 'red'  # Shriram stays red
+
+# Step 3: Build Plotly figure
+fig_tracking_error = go.Figure()
+
+for scheme in unique_schemes:
+    df_scheme = plot_data_peer[plot_data_peer['Scheme Name'] == scheme]
+
+    fig_tracking_error.add_trace(go.Scatter(
+        x=df_scheme['Portfolio  Date'],
+        y=df_scheme['Tracking_Error_%'],
+        mode='lines',
+        name=scheme,
+        line=dict(
+            color=color_map[scheme],
+            width=2 if scheme == highlight_scheme else 1.5,
+            dash='solid'
+        ),
+        hovertemplate='<b>%{x|%Y-%m-%d}</b><br>%{text}<br>TE (Peer): %{y:.2f}%',
+        text=[scheme] * len(df_scheme),
+        visible=True if scheme == highlight_scheme else 'legendonly'
+    ))
+
+# Step 4: Layout
+fig_tracking_error.update_layout(
+    title='Tracking Error With Peer Benchmark Over Time',
+    xaxis_title='Date',
+    yaxis_title='Tracking Error vs Peer Benchmark (%)',
+    template='plotly_white',
+    hovermode='x unified',
+    height=650,
+    legend_title='Click schemes to toggle'
+)
+
+import plotly.express as px
+
+# =============================
+# Chart 5: Tracking Error Over Time (All Schemes)
+# =============================
+
+highlight_scheme = 'Shriram Flexi Cap Fund (G)'
+
+# Ensure date column is datetime
+plot_data['Portfolio  Date'] = pd.to_datetime(plot_data['Portfolio  Date'], errors='coerce')
+
+unique_schemes = sorted(plot_data['Scheme Name'].unique())
+
+# Step 2: Define color palette
+color_palette = px.colors.qualitative.Dark24 + px.colors.qualitative.Set3 + px.colors.qualitative.Set2
+color_map = {scheme: color_palette[i % len(color_palette)] for i, scheme in enumerate(unique_schemes)}
+
+# Override highlight scheme to red
+color_map[highlight_scheme] = 'red'
+
+# Step 3: Build figure
+fig_tracking_error_all = go.Figure()
+
+for scheme in unique_schemes:
+    df_scheme = plot_data[plot_data['Scheme Name'] == scheme]
+    
+    fig_tracking_error_all.add_trace(go.Scatter(
+        x=df_scheme['Portfolio  Date'],
+        y=df_scheme['Tracking_Error_%'],
+        mode='lines',
+        name=scheme,
+        line=dict(
+            color=color_map[scheme],
+            width=2 if scheme == highlight_scheme else 1.5,
+            dash='solid'
+        ),
+        hovertemplate='<b>%{x|%Y-%m-%d}</b><br>%{text}<br>TE: %{y:.2f}%',
+        text=[scheme] * len(df_scheme),
+        visible=True if scheme == highlight_scheme else 'legendonly'
+    ))
+
+# Step 4: Layout
+fig_tracking_error_all.update_layout(
+    title='Tracking Error Over Time',
+    xaxis_title='Date',
+    yaxis_title='Tracking Error (%)',
+    template='plotly_white',
+    hovermode='x unified',
+    height=650,
+    legend_title='Click schemes to toggle'
+)
 
 # ---------------------------
 # Create scrollable table
@@ -296,6 +434,10 @@ app.layout = html.Div([
     dcc.Graph(figure=fig_sector),  # Chart 2
     html.H2("Top Active Weight Changes"),
     dcc.Graph(figure=fig_changes),  # Chart 3
+    html.H2("Tracking Error With Peer Benchmark Over Time"),
+    dcc.Graph(figure=fig_tracking_error),  # Chart 4
+    html.H2("Tracking Error Over Time (All Schemes)"),
+    dcc.Graph(figure=fig_tracking_error_all),  # Chart 5
     html.H2("Merged Weights Comparison"),
     table_component
 ])
