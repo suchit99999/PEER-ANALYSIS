@@ -1,149 +1,3 @@
-# from dash import Dash, dcc, html, Input, Output, State
-# import dash_bootstrap_components as dbc
-# import pandas as pd
-# import plotly.graph_objects as go
-# import urllib.parse
-
-# # Initialize Dash
-# app = Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.BOOTSTRAP])
-# server = app.server
-
-# # Fund options
-# fund_options = ["AGGRESSIVE HYBRID", "BALANCED ADVANTAGE", "MULTI ASSET"]
-
-# # Layout for Page 1
-# page1_layout = html.Div([
-#     html.H1("Select Fund Category", className="text-center mt-4"),
-#     dcc.Dropdown(
-#         id="fund_selector",
-#         options=[{"label": fund, "value": fund} for fund in fund_options],
-#         value=fund_options[0],
-#         clearable=False,
-#         style={"width": "50%", "margin": "auto"}
-#     ),
-#     html.Br(),
-#     dbc.Button("Go to Dashboard", id="go_to_dashboard", color="primary", className="d-block mx-auto"),
-# ])
-
-# # Layout for Page 2 (Dashboard)
-# page2_layout = html.Div([
-#     html.H2(id="selected_fund_title", className="text-center mt-4"),
-#     html.Div(id="dashboard_content")
-# ])
-
-# # Main app layout with page navigation
-# app.layout = html.Div([
-#     dcc.Location(id="url", refresh=False),
-#     html.Div(id="page_content")
-# ])
-
-# # -----------------------------
-# # PAGE ROUTING
-# # -----------------------------
-# @app.callback(Output("page_content", "children"), Input("url", "pathname"))
-# def display_page(pathname):
-#     if pathname == "/dashboard":
-#         return page2_layout
-#     else:
-#         return page1_layout
-
-# # -----------------------------
-# # NAVIGATION BUTTON
-# # -----------------------------
-# @app.callback(Output("url", "pathname"),
-#               Input("go_to_dashboard", "n_clicks"),
-#               State("fund_selector", "value"),
-#               prevent_initial_call=True)
-# def go_to_dashboard(n_clicks, selected_fund):
-#     # Pass selected fund in URL query string
-#     encoded_fund = urllib.parse.quote(selected_fund)
-#     return f"/dashboard?fund={encoded_fund}"
-
-# # -----------------------------
-# # LOAD DATA & BUILD DASHBOARD
-# # -----------------------------
-# @app.callback(
-#     Output("selected_fund_title", "children"),
-#     Output("dashboard_content", "children"),
-#     Input("url", "search")
-# )
-# def update_dashboard(query_string):
-#     if not query_string:
-#         return "", html.P("No fund selected.")
-    
-#     # Extract fund from query string
-#     fund = urllib.parse.unquote(query_string.split("=")[-1])
-    
-#     # Load data dynamically from GitHub
-#     base_url = f"https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/{urllib.parse.quote(fund)}/"
-#     try:
-#         filtered_percentile_df = pd.read_json(base_url + "filtered_percentile_df.json")
-#         merged_weights_comparison = pd.read_json(base_url + "merged_weights_comparison.json")
-#         sector_weight_df = pd.read_json(base_url + "sector_weight_df.json")
-#         plot_data_peer = pd.read_json(base_url + "plot_data_peer.json")
-#         plot_data = pd.read_json(base_url + "plot_data.json")
-#         pivot_avg = pd.read_json(base_url + "pivot_avg.json")
-#     except Exception as e:
-#         return fund, html.P(f"Error loading data: {e}")
-
-#     # Ensure date columns are datetime
-#     date_cols = ['Portfolio  Date', 'Next_Portfolio_Date']
-#     for df in [filtered_percentile_df, plot_data_peer, plot_data, pivot_avg, sector_weight_df]:
-#         for col in df.columns:
-#             if col in date_cols:
-#                 df[col] = pd.to_datetime(df[col], errors='coerce')
-
-#     # ---- Example Chart ----
-#     fig_avg_allocation = go.Figure()
-#     for category in pivot_avg.columns.drop("Portfolio  Date"):
-#         fig_avg_allocation.add_trace(
-#             go.Scatter(
-#                 x=pivot_avg["Portfolio  Date"],
-#                 y=pivot_avg[category],
-#                 mode="lines",
-#                 name=category,
-#                 fill="tozeroy"
-#             )
-#         )
-#     fig_avg_allocation.update_layout(
-#         title="Average Investment Category Allocation",
-#         template="plotly_white"
-#     )
-
-#     # Add more charts (reuse your previous plotting code)
-#     charts = [
-#         dcc.Graph(figure=fig_avg_allocation),
-#         html.Hr(),
-#         html.H3("Merged Weights Comparison"),
-#         html.Pre(merged_weights_comparison.head().to_string())  # Replace with DataTable
-#     ]
-    
-#     return f"Dashboard — {fund}", charts
-
-# # -----------------------------
-# if __name__ == "__main__":
-#     app.run_server(debug=True, port=8051)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # -*- coding: utf-8 -*-
 """
 Created on Tue Aug  5 10:01:52 2025
@@ -158,7 +12,7 @@ from dash import Dash, dcc, html, dash_table
 # Load data from GitHub
 # ---------------------------
 def load_data():
-    url = "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/filtered_percentile_df.json"
+    url = "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/MULTI%20ASSET/filtered_percentile_df.json"
     return pd.read_json(url)
 
 # Load chart data
@@ -166,12 +20,12 @@ filtered_percentile_df = load_data()
 
 # Load table data
 merged_weights_comparison = pd.read_json(
-    "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/merged_weights_comparison.json"
+    "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/MULTI%20ASSET/merged_weights_comparison.json"
 )
 
 # Load JSON
 sector_weight_df = pd.read_json(
-    "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/sector_weight_df.json"
+    "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/MULTI%20ASSET/sector_weight_df.json"
 )
 
 # If the JSON stores dates as epoch milliseconds
@@ -191,7 +45,7 @@ sector_weight_df = sector_weight_df.dropna(subset=['Next_Portfolio_Date'])
 
 # Load JSON
 plot_data_peer = pd.read_json(
-    "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/plot_data_peer.json"
+    "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/MULTI%20ASSET/plot_data_peer.json"
 )
 
 # If the JSON stores dates as epoch milliseconds
@@ -210,7 +64,7 @@ plot_data_peer = plot_data_peer.dropna(subset=['Portfolio  Date'])
 
 # Load JSON
 plot_data = pd.read_json(
-    "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/plot_data.json"
+    "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/MULTI%20ASSET/plot_data.json"
 )
 
 # If the JSON stores dates as epoch milliseconds
@@ -229,7 +83,7 @@ plot_data = plot_data.dropna(subset=['Portfolio  Date'])
 
 # Load JSON
 pivot_avg = pd.read_json(
-    "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/pivot_avg.json"
+    "https://raw.githubusercontent.com/suchit99999/PEER-ANALYSIS/main/MULTI%20ASSET/pivot_avg.json"
 )
 
 # If the JSON stores dates as epoch milliseconds
